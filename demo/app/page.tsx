@@ -874,6 +874,22 @@ export default function Home() {
                     <p>💡 This app works in Farcaster frames with automatic wallet connection.</p>
                     <p>Your wallet will connect automatically when the frame is ready.</p>
                   </div>
+                  {isFrameReady && !address && (
+                    <div className="mt-4">
+                      <p className="text-sm text-gray-600 mb-2">
+                        If wallet doesn&apos;t connect automatically, try refreshing the frame or check that you&apos;re in a Farcaster app.
+                      </p>
+                      <button
+                        onClick={() => {
+                          console.log('Manual connection attempt - Frame ready:', isFrameReady, 'Address:', address);
+                          setFrameReady();
+                        }}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                      >
+                        🔄 Retry Connection
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : address && (hasMinted || justMinted) ? (

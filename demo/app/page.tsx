@@ -683,7 +683,7 @@ export default function Home() {
     functionName: 'getWorkshopDetails',
   }) as { data: WorkshopDetails | undefined };
 
-  const { writeContract: mint, isPending: isMinting, isSuccess: mintSuccess } = useWriteContract();
+  const { writeContract: mint, isPending: isMinting, isSuccess: mintSuccess, error: mintError } = useWriteContract();
 
   useEffect(() => {
     if (!isFrameReady) {
@@ -696,6 +696,24 @@ export default function Home() {
       setHasMinted(Boolean(mintStatus));
     }
   }, [mintStatus]);
+
+  // Handle mint errors
+  useEffect(() => {
+    if (mintError) {
+      console.error('Mint error:', mintError);
+      
+      if (mintError.message?.includes('already minted') || mintError.message?.includes('has already been minted')) {
+        alert('You have already minted your POAP for this workshop!');
+        setHasMinted(true);
+      } else if (mintError.message?.includes('insufficient funds')) {
+        alert('Insufficient funds for gas fees. Please ensure you have ETH on Base network.');
+      } else if (mintError.message?.includes('User rejected')) {
+        console.log('Transaction rejected by user');
+      } else {
+        alert(`Transaction failed: ${mintError.message || 'Unknown error'}`);
+      }
+    }
+  }, [mintError]);
 
   // Trigger confetti when mint is successful
   useEffect(() => {
@@ -754,13 +772,33 @@ export default function Home() {
         return;
       }
       
-      mint({
+      // Check if already minted before attempting transaction
+      if (hasMinted) {
+        alert('You have already minted your POAP for this workshop!');
+        return;
+      }
+      
+      if (!address) {
+        alert('Please connect your wallet first.');
+        return;
+      }
+      
+      console.log('Attempting to mint POAP...', { 
+        address, 
+        CONTRACT_ADDRESS,
+        hasMinted,
+        isFrameReady,
+        isConnected 
+      });
+      
+      await mint({
         address: CONTRACT_ADDRESS!,
         abi: contractABI,
         functionName: 'mint',
       });
     } catch (error) {
-      console.error('Error minting:', error);
+      console.error('Error in handleMint:', error);
+      // Error handling is now in useEffect for mintError
     }
   };
 

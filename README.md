@@ -174,13 +174,6 @@ The application is designed for deployment as a Farcaster frame but can also be 
 - Environment variables must be configured
 - Requires wallet connection for full functionality
 
-## 🛡 Security Considerations
-
-- **Contract Verification**: Smart contract is deployed and verified on Base
-- **One-per-address**: Enforced at contract level to prevent double-claiming
-- **Non-transferable**: Soulbound implementation prevents token transfers
-- **Input Validation**: All user inputs are properly validated
-- **Error Handling**: Graceful handling of network and transaction errors
 
 ## 📊 Analytics & Events
 
@@ -189,14 +182,6 @@ The contract emits several events for tracking:
 - `MintAttempted(address attempter, bool success, string message)` - All mint attempts
 - `Transfer(address from, address to, uint256 tokenId)` - Token transfers (blocked for SBT)
 
-## 🤝 Contributing
-
-This project was built for the BUILD ON BASE CHALLENGE workshop. For modifications or improvements:
-
-1. Fork the repository
-2. Create a feature branch
-3. Test thoroughly on Base testnet first
-4. Submit a pull request with detailed description
 
 ## 📝 License
 
@@ -212,5 +197,3 @@ This project is built for educational and workshop purposes as part of the BUILD
 ---
 
 **Built with ❤️ on Base** | **Powered by Base Minikit**
-
-For questions or support, please refer to the [Base documentation](https://docs.base.org) or contact the workshop organizers.

@@ -11,35 +11,24 @@ export const viewport: Viewport = {
 
 export async function generateMetadata(): Promise<Metadata> {
   const URL = process.env.NEXT_PUBLIC_URL || "https://bob-livestream.vercel.app/";
-  const projectName = process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME || "BUILD ON BASE CHALLENGE - BORDERLESS WORKSHOPS";
-  const heroImage = process.env.NEXT_PUBLIC_APP_HERO_IMAGE || "/app.png";
-  
-  const miniAppEmbed = {
-    version: "1",
-    imageUrl: `${URL}${heroImage.startsWith('/') ? heroImage.slice(1) : heroImage}`,
-    button: {
-      title: "🎉 Mint POAP",
-      action: {
-        type: "launch_miniapp",
-        url: URL,
-        name: projectName,
-        splashImageUrl: `${URL}splash.png`,
-        splashBackgroundColor: "#0052FF"
-      }
-    }
-  };
-
   return {
-    title: projectName,
+    title: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME,
     description: "Mint your POAP for attending the BUILD ON BASE workshop",
-    openGraph: {
-      title: projectName,
-      description: "Mint your POAP for attending the BUILD ON BASE workshop",
-      images: [heroImage],
-    },
     other: {
-      'fc:miniapp': JSON.stringify(miniAppEmbed),
-      'fc:frame': JSON.stringify(miniAppEmbed), // For backward compatibility
+      "fc:frame": JSON.stringify({
+        version: process.env.NEXT_PUBLIC_VERSION,
+        imageUrl: process.env.NEXT_PUBLIC_IMAGE_URL,
+        button: {
+          title: `Launch ${process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME}`,
+          action: {
+            type: "launch_frame",
+            name: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME,
+            url: URL,
+            splashImageUrl: process.env.NEXT_PUBLIC_APP_SPLASH_IMAGE,
+            splashBackgroundColor: `#${process.env.NEXT_PUBLIC_SPLASH_BACKGROUND_COLOR}`,
+          },
+        },
+      }),
     },
   };
 }

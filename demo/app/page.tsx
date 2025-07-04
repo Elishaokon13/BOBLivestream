@@ -5,6 +5,7 @@ import { useAccount, useReadContract, useWriteContract } from 'wagmi';
 import confetti from 'canvas-confetti';
 import { WalletConnect } from './components/WalletConnect';
 import Image from 'next/image';
+import { sdk } from '@farcaster/miniapp-sdk';
 
 // Contract address
 const CONTRACT_ADDRESS = '0xc90Cf316E1A74Ea9da13E87d95Eda3d9281731a1'.toLowerCase() as `0x${string}`;
@@ -68,6 +69,7 @@ export default function Home() {
   const [hasMinted, setHasMinted] = useState<boolean>(false);
   const [justMinted, setJustMinted] = useState<boolean>(false);
   const [isMinting, setIsMinting] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Metrics state
   const [totalMints, setTotalMints] = useState<number>(0);
@@ -122,6 +124,26 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
+  // Initialize frame and handle loading
+  useEffect(() => {
+    // Only call ready when all initial data is loaded
+    const initializeApp = async () => {
+      try {
+        setIsLoading(true);
+        // Add any other initialization logic here
+        
+        // Mark the app as ready to hide splash screen
+        await sdk.actions.ready();
+      } catch (error) {
+        console.error('Error initializing app:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeApp();
+  }, []);
+
   // Check if user has already minted
   const { data: hasMintedData } = useReadContract({
     address: CONTRACT_ADDRESS,
@@ -161,6 +183,18 @@ export default function Home() {
       setIsMinting(false);
     }
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <main className="min-h-screen bg-[#0052FF] text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white/60">Loading...</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#0052FF] text-white">

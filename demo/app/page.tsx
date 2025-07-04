@@ -3,24 +3,19 @@
 import React, { useEffect, useState } from 'react';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import { useAccount, useReadContract, useWriteContract, useWatchContractEvent, usePublicClient } from 'wagmi';
-import { type Log } from 'viem';
 import confetti from 'canvas-confetti';
 import { WalletConnect } from './components/WalletConnect';
 import { sdk } from '@farcaster/miniapp-sdk';
+import Image from 'next/image';
 
 // Type guard for Ethereum address
-function isValidEthereumAddress(address: string): address is `0x${string}` {
-  return address.startsWith('0x') && address.length === 42;
+
+// Contract address
+const CONTRACT_ADDRESS = '0xc90Cf316E1A74Ea9da13E87d95Eda3d9281731a1'.toLowerCase() as `0x${string}`;
+
+if (!/^0x[a-fA-F0-9]{40}$/.test(CONTRACT_ADDRESS)) {
+  throw new Error('CONTRACT_ADDRESS must be a valid Ethereum address (0x... format, 42 characters)');
 }
-
-// Validate and type the contract address
-const CONTRACT_ADDRESS_STRING = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? '';
-
-if (!isValidEthereumAddress(CONTRACT_ADDRESS_STRING)) {
-  throw new Error('NEXT_PUBLIC_CONTRACT_ADDRESS must be a valid Ethereum address (0x... format, 42 characters)');
-}
-
-const CONTRACT_ADDRESS = CONTRACT_ADDRESS_STRING.toLowerCase() as `0x${string}`;
 
 // Actual contract ABI from deployed contract
 const contractABI = [
@@ -661,6 +656,9 @@ const contractABI = [
 	}
 ] as const;
 
+// Base mainnet deployment block - updated for new contract
+const DEPLOYMENT_BLOCK = BigInt('7300000'); // Starting from a recent block to ensure we catch all events
+
 export default function Home() {
   const { isFrameReady } = useMiniKit();
   const { address } = useAccount();
@@ -690,7 +688,7 @@ export default function Home() {
           address: CONTRACT_ADDRESS,
           abi: contractABI,
           eventName: 'POAPMinted',
-          fromBlock: 'earliest',
+          fromBlock: DEPLOYMENT_BLOCK,
           toBlock: 'latest'
         });
 
@@ -699,7 +697,7 @@ export default function Home() {
           address: CONTRACT_ADDRESS,
           abi: contractABI,
           eventName: 'MintAttempted',
-          fromBlock: 'earliest',
+          fromBlock: DEPLOYMENT_BLOCK,
           toBlock: 'latest'
         });
 
@@ -707,19 +705,18 @@ export default function Home() {
         setTotalMints(mintEvents.length);
         
         const attempts = attemptEvents.length;
-        const successes = attemptEvents.filter(event => 
-          // @ts-ignore - args type is known from contract
-          event.args.success
-        ).length;
+        const successes = attemptEvents.filter(event => {
+          const args = event.args as { success: boolean };
+          return args.success;
+        }).length;
         setSuccessRate(attempts > 0 ? (successes / attempts) * 100 : 0);
 
         // Update recent mints
         const recentMintEvents = mintEvents
           .slice(-5)
           .map(event => {
-            // @ts-ignore - args type is known from contract
-            const address = event.args.to as string;
-            // Get block timestamp if available, otherwise use current time
+            const args = event.args as { to: string };
+            const address = args.to;
             const timestamp = Date.now();
             return { address, timestamp };
           })
@@ -733,6 +730,42 @@ export default function Home() {
 
     fetchHistoricalEvents();
   }, [publicClient]);
+
+  // Watch for new POAPMinted events
+  useWatchContractEvent({
+    address: CONTRACT_ADDRESS,
+    abi: contractABI,
+    eventName: 'POAPMinted',
+    onLogs: (logs) => {
+      setTotalMints(prev => prev + logs.length);
+      const newMints = logs.map(log => {
+        const args = log.args as { to: string };
+        return {
+          address: args.to,
+          timestamp: Date.now()
+        };
+      });
+      setRecentMints(prev => [...newMints, ...prev].slice(0, 5));
+    }
+  });
+
+  // Watch for new MintAttempted events
+  useWatchContractEvent({
+    address: CONTRACT_ADDRESS,
+    abi: contractABI,
+    eventName: 'MintAttempted',
+    onLogs: (logs) => {
+      const successes = logs.filter(log => {
+        const args = log.args as { success: boolean };
+        return args.success;
+      }).length;
+      setSuccessRate(() => {
+        const newTotal = totalMints + logs.length;
+        const newSuccesses = successes;
+        return newTotal > 0 ? (newSuccesses / newTotal) * 100 : 0;
+      });
+    }
+  });
 
   // Initialize Farcaster SDK
   useEffect(() => {
@@ -794,9 +827,18 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#0052FF] text-white">
       {/* Fixed Header */}
-      <header className="fixed top-0 left-0 right-0 bg-[#0052FF]/90 backdrop-blur-sm border-b border-white/10 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold">Base Challenge</h1>
+      <header className="fixed top-0 left-0 right-0 bg-[#0052FF]/80 backdrop-blur-sm border-b border-white/10 z-50">
+        <div className="max-w-2xl mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Image
+              src="/logo.png"
+              alt="Logo"
+              width={32}
+              height={32}
+              className="w-8 h-8"
+            />
+            <span className="font-medium">Base Challenge</span>
+          </div>
           <WalletConnect />
         </div>
       </header>
@@ -804,13 +846,22 @@ export default function Home() {
       {/* Main Content */}
       <div className="max-w-2xl mx-auto px-4 pt-24 pb-12">
         {/* Hero Section */}
-        <div className="text-center space-y-4 mb-12">
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
-            Build on Base Challenge
-          </h1>
-          <p className="text-xl text-white/80">
-            Borderless Workshops
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-4">Base Challenge POAP</h1>
+          <p className="text-xl text-white/60">
+            Mint your POAP to commemorate participating in the Base Challenge!
           </p>
+        </div>
+
+        {/* Replace img with Image component */}
+        <div className="relative w-full aspect-video rounded-xl overflow-hidden mb-8">
+          <Image
+            src="/hero.png"
+            alt="Hero image"
+            fill
+            className="object-cover"
+            priority
+          />
         </div>
 
         {/* Metrics Section */}

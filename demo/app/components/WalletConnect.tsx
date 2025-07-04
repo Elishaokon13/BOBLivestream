@@ -4,11 +4,11 @@ export function WalletConnect() {
   const { isConnected, address } = useAccount()
   const { connect, connectors } = useConnect()
 
-  if (isConnected && address) {
+  if (isConnected) {
     return (
       <div className="flex flex-col items-center gap-2">
-        <div className="text-sm text-gray-600">Connected Wallet</div>
-        <div className="font-mono text-sm">{address}</div>
+        <div className="text-green-500">You&apos;re connected!</div>
+        <div className="text-sm text-gray-600">Address: {address}</div>
       </div>
     )
   }
@@ -17,7 +17,7 @@ export function WalletConnect() {
     <button
       type="button"
       onClick={() => connect({ connector: connectors[0] })}
-      className="px-4 py-2 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
     >
       Connect Wallet
     </button>

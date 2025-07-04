@@ -2,7 +2,7 @@
 
 A **Proof of Attendance Protocol (POAP)** application built for the "BUILD ON BASE CHALLENGE - BORDERLESS WORKSHOPS" event. This application allows workshop attendees to mint unique, non-transferable tokens (Soulbound Tokens) as proof of their participation.
 
-![POAP App Screenshot](/demo/public/screenshot.png)
+![POAP App Screenshot](/demo/public/app.png)
 
 ## 🎯 Project Overview
 

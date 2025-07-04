@@ -665,8 +665,9 @@ export default function Home() {
   const { address } = useAccount();
   const [hasMinted, setHasMinted] = useState<boolean>(false);
   const [justMinted, setJustMinted] = useState<boolean>(false);
-  
-  // Initialize SDK
+  const [isMinting, setIsMinting] = useState<boolean>(false);
+
+  // Initialize Farcaster SDK
   useEffect(() => {
     try {
       sdk.actions.ready();
@@ -676,9 +677,7 @@ export default function Home() {
     }
   }, []);
 
-  // Debug logging
-  console.log('Debug - address:', address, 'isFrameReady:', isFrameReady);
-
+  // Check mint status
   const { data: mintStatus } = useReadContract({
     address: CONTRACT_ADDRESS,
     abi: contractABI,
@@ -702,6 +701,7 @@ export default function Home() {
         return;
       }
 
+      setIsMinting(true);
       await writeContract({
         address: CONTRACT_ADDRESS,
         abi: contractABI,
@@ -709,122 +709,147 @@ export default function Home() {
       });
 
       setJustMinted(true);
+      setHasMinted(true);
       confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 }
+        particleCount: 150,
+        spread: 90,
+        origin: { y: 0.6 },
+        colors: ['#0052FF', '#FF8C00', '#22C55E'],
       });
     } catch (error) {
       console.error('Mint error:', error);
       alert('Failed to mint POAP. Please try again.');
+    } finally {
+      setIsMinting(false);
     }
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm">
-        <h1 className="text-4xl font-bold text-center mb-8">BUILD ON BASE CHALLENGE</h1>
-        <h2 className="text-2xl text-center mb-12">BORDERLESS WORKSHOPS</h2>
-        
-        <div className="flex flex-col items-center gap-8">
+    <main className="min-h-screen bg-[#0052FF] text-white">
+      {/* Fixed Header */}
+      <header className="fixed top-0 left-0 right-0 bg-[#0052FF]/90 backdrop-blur-sm border-b border-white/10 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+          <h1 className="text-xl font-bold">Base Challenge</h1>
           <WalletConnect />
-          
-          {address && (
-            <div className="flex flex-col items-center gap-4">
-              {/* Workshop Details Card */}
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <h3 className="text-xl font-semibold mb-4 text-gray-800">Workshop Details</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="font-medium text-gray-600">Event:</span>
-                    <span className="text-gray-800">BUILD ON BASE CHALLENGE - BORDERLESS WORKSHOPS</span>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="max-w-2xl mx-auto px-4 pt-24 pb-12">
+        {/* Hero Section */}
+        <div className="text-center space-y-4 mb-12">
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
+            Build on Base Challenge
+          </h1>
+          <p className="text-xl text-white/80">
+            Borderless Workshops
+          </p>
+        </div>
+
+        {address && (
+          <div className="space-y-6">
+            {/* Workshop Details Card */}
+            <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-6 sm:p-8">
+              <h2 className="text-2xl font-bold mb-6">Workshop Details</h2>
+              <div className="grid sm:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <div>
+                    <span className="text-sm text-white/60">Event</span>
+                    <p className="font-medium">Build on Base Challenge</p>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium text-gray-600">Start Date:</span>
-                    <span className="text-gray-800">June 16, 2025</span>
+                  <div>
+                    <span className="text-sm text-white/60">Start Date</span>
+                    <p className="font-medium">June 16, 2025</p>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium text-gray-600">End Date:</span>
-                    <span className="text-gray-800">June 25, 2025</span>
+                  <div>
+                    <span className="text-sm text-white/60">End Date</span>
+                    <p className="font-medium">June 25, 2025</p>
                   </div>
                 </div>
-              </div>
-
-              {/* Action Section */}
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <div className="text-center space-y-6">
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                      Claim Your POAP
-                    </h3>
-                    <p className="text-gray-600">
-                      Proof of Attendance Protocol - One per address, non-transferable
-                    </p>
-                  </div>
-
-                  {hasMinted || justMinted ? (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <div className="flex items-center justify-center space-x-2">
-                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                          <span className="text-white text-xs">✓</span>
-                        </div>
-                        <span className="text-green-800 font-medium">
-                          {justMinted ? '🎉 POAP Minted Successfully! 🎉' : 'You have already claimed your POAP!'}
-                        </span>
-                      </div>
-                      {justMinted && (
-                        <div className="mt-3 text-center">
-                          <p className="text-green-700 text-sm animate-pulse">
-                            Congratulations! Your POAP is now in your wallet! 🚀
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {/* Connection Status */}
-                      {!isFrameReady && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                          <div className="text-center space-y-3">
-                            <div className="flex items-center justify-center space-x-2">
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                              <span className="text-blue-800">
-                                Initializing Farcaster frame...
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Mint Button */}
-                      <button
-                        onClick={handleMint}
-                        disabled={!isFrameReady || !address}
-                        className={`w-1/2 py-4 px-6 rounded-lg font-semibold text-lg transition-colors ${
-                          !isFrameReady || !address
-                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                            : 'bg-[#0052FF] hover:bg-blue-700 text-white shadow-lg hover:shadow-xl'
-                        }`}
-                      >
-                        {!isFrameReady || !address
-                          ? '🎉 Mint POAP (Connecting...)'
-                          : '🎉 Mint POAP'
-                        }
-                      </button>
-
-                      {/* Status Message */}
-                      {!isFrameReady && (
-                        <div className="text-center text-sm text-gray-500">
-                          Button will activate when Farcaster wallet is connected
-                        </div>
-                      )}
-                    </div>
-                  )}
+                <div className="hidden sm:flex items-center justify-center">
+                  <img
+                    src="/icon.png"
+                    alt="Workshop Logo"
+                    className="w-32 h-32 object-contain opacity-90 hover:opacity-100 transition-opacity"
+                  />
                 </div>
               </div>
             </div>
-          )}
-        </div>
+
+            {/* Mint Section */}
+            <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-6 sm:p-8">
+              <div className="text-center space-y-6">
+                <div>
+                  <h2 className="text-2xl font-bold">Claim Your POAP</h2>
+                  <p className="text-white/60 mt-2">
+                    Proof of Attendance Protocol - One per address, non-transferable
+                  </p>
+                </div>
+
+                {hasMinted || justMinted ? (
+                  <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-6">
+                    <div className="flex items-center justify-center space-x-3">
+                      <div className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <span className="font-medium text-lg">
+                        {justMinted ? '🎉 POAP Minted Successfully!' : 'You already claimed your POAP!'}
+                      </span>
+                    </div>
+                    {justMinted && (
+                      <p className="mt-3 text-emerald-400 text-sm animate-pulse">
+                        Your unique POAP is now in your wallet! 🚀
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <button
+                      onClick={handleMint}
+                      disabled={!isFrameReady || !address || isMinting}
+                      className={`
+                        w-full sm:w-auto px-8 py-3 rounded-xl font-semibold text-lg
+                        transition-all duration-300 transform hover:-translate-y-0.5
+                        ${isMinting ? 'bg-white/10 cursor-not-allowed' : 'bg-white text-[#0052FF] hover:bg-white/90'}
+                        disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:-translate-y-0
+                      `}
+                    >
+                      {isMinting ? (
+                        <div className="flex items-center justify-center space-x-2">
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>Minting...</span>
+                        </div>
+                      ) : !isFrameReady ? (
+                        'Connecting...'
+                      ) : (
+                        '🎉 Claim Your POAP'
+                      )}
+                    </button>
+
+                    {!isFrameReady && (
+                      <p className="text-sm text-white/60">
+                        Please wait for wallet connection
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Initial Connect State */}
+        {!address && (
+          <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-8 text-center">
+            <h2 className="text-2xl font-bold mb-4">Connect Your Wallet</h2>
+            <p className="text-white/60 mb-6">
+              Connect your wallet to mint your exclusive POAP from the BUILD ON BASE workshop
+            </p>
+            <WalletConnect />
+          </div>
+        )}
       </div>
     </main>
   );

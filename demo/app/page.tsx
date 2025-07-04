@@ -786,39 +786,41 @@ export default function Home() {
     account: address,
   });
 
+  // Check if user has already minted
+  const { data: hasMintedData } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: contractABI,
+    functionName: 'hasMinted',
+    args: address ? [address as `0x${string}`] : undefined,
+    query: {
+      enabled: !!address
+    }
+  });
+
+  // Update hasMinted state when data changes
+  useEffect(() => {
+    if (hasMintedData !== undefined) {
+      setHasMinted(!!hasMintedData);
+    }
+  }, [hasMintedData]);
+
+  // Handle minting
   const { writeContract } = useWriteContract();
 
-  useEffect(() => {
-    if (mintStatus) {
-      setHasMinted(true);
-    }
-  }, [mintStatus]);
-
   const handleMint = async () => {
+    if (!address) return;
+    
     try {
-      if (!address) {
-        alert('Please connect your Farcaster wallet first.');
-        return;
-      }
-
       setIsMinting(true);
       await writeContract({
         address: CONTRACT_ADDRESS,
         abi: contractABI,
         functionName: 'mint',
       });
-
       setJustMinted(true);
-      setHasMinted(true);
-      confetti({
-        particleCount: 150,
-        spread: 90,
-        origin: { y: 0.6 },
-        colors: ['#0052FF', '#FF8C00', '#22C55E'],
-      });
+      confetti();
     } catch (error) {
-      console.error('Mint error:', error);
-      alert('Failed to mint POAP. Please try again.');
+      console.error('Error minting:', error);
     } finally {
       setIsMinting(false);
     }
@@ -921,65 +923,32 @@ export default function Home() {
             </div>
 
             {/* Mint Section */}
-            <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-6 sm:p-8">
-              <div className="text-center space-y-6">
-                <div>
-                  <h2 className="text-2xl font-bold">Claim Your POAP</h2>
-                  <p className="text-white/60 mt-2">
-                    Proof of Attendance Protocol - One per address, non-transferable
-                  </p>
+            <div className="text-center">
+              {!address ? (
+                <p className="text-white/60 mb-4">Connect your wallet to mint</p>
+              ) : hasMinted ? (
+                <div className="bg-white/10 rounded-xl p-6 mb-4">
+                  <h3 className="text-xl font-bold mb-2">🎉 You've already minted!</h3>
+                  <p className="text-white/60">Thank you for participating in the Base Challenge</p>
                 </div>
-
-                {hasMinted || justMinted ? (
-                  <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-6">
-                    <div className="flex items-center justify-center space-x-3">
-                      <div className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                      <span className="font-medium text-lg">
-                        {justMinted ? '🎉 POAP Minted Successfully!' : 'You already claimed your POAP!'}
-                      </span>
-                    </div>
-                    {justMinted && (
-                      <p className="mt-3 text-emerald-400 text-sm animate-pulse">
-                        Your unique POAP is now in your wallet! 🚀
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <button
-                      onClick={handleMint}
-                      disabled={!isFrameReady || !address || isMinting}
-                      className={`
-                        w-full sm:w-auto px-8 py-3 rounded-xl font-semibold text-lg
-                        transition-all duration-300 transform hover:-translate-y-0.5
-                        ${isMinting ? 'bg-white/10 cursor-not-allowed' : 'bg-white text-[#0052FF] hover:bg-white/90'}
-                        disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:-translate-y-0
-                      `}
-                    >
-                      {isMinting ? (
-                        <div className="flex items-center justify-center space-x-2">
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          <span>Minting...</span>
-                        </div>
-                      ) : !isFrameReady ? (
-                        'Connecting...'
-                      ) : (
-                        '🎉 Claim Your POAP'
-                      )}
-                    </button>
-
-                    {!isFrameReady && (
-                      <p className="text-sm text-white/60">
-                        Please wait for wallet connection
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
+              ) : justMinted ? (
+                <div className="bg-white/10 rounded-xl p-6 mb-4">
+                  <h3 className="text-xl font-bold mb-2">🎉 Mint successful!</h3>
+                  <p className="text-white/60">Your POAP has been minted to your wallet</p>
+                </div>
+              ) : (
+                <button
+                  onClick={handleMint}
+                  disabled={isMinting || !address}
+                  className={`w-full max-w-sm mx-auto px-8 py-4 rounded-xl font-medium transition
+                    ${isMinting 
+                      ? 'bg-white/20 cursor-not-allowed'
+                      : 'bg-white hover:bg-white/90 text-[#0052FF] hover:scale-105'
+                    }`}
+                >
+                  {isMinting ? 'Minting...' : 'Mint POAP'}
+                </button>
+              )}
             </div>
           </div>
         )}

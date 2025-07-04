@@ -7,6 +7,9 @@ import { WagmiConfig } from "wagmi";
 import { config } from "../lib/wagmi";
 
 export function Providers(props: { children: ReactNode }) {
+  const projectName = process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME || "BUILD ON BASE CHALLENGE - BORDERLESS WORKSHOPS";
+  const iconUrl = process.env.NEXT_PUBLIC_ICON_URL || "/icon.png";
+
   return (
     <WagmiConfig config={config}>
       <MiniKitProvider
@@ -16,8 +19,8 @@ export function Providers(props: { children: ReactNode }) {
           appearance: {
             mode: "auto",
             theme: "mini-app-theme",
-            name: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME || "BUILD ON BASE CHALLENGE - BORDERLESS WORKSHOPS",
-            logo: process.env.NEXT_PUBLIC_ICON_URL || "/icon.png",
+            name: projectName,
+            logo: iconUrl,
           },
         }}
       >

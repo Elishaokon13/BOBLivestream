@@ -1,666 +1,69 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useMiniKit } from '@coinbase/onchainkit/minikit';
-import { useAccount, useReadContract, useWriteContract, useWatchContractEvent, usePublicClient } from 'wagmi';
+import { useAccount, useReadContract, useWriteContract } from 'wagmi';
 import confetti from 'canvas-confetti';
 import { WalletConnect } from './components/WalletConnect';
-import { sdk } from '@farcaster/miniapp-sdk';
 import Image from 'next/image';
-
-// Type guard for Ethereum address
 
 // Contract address
 const CONTRACT_ADDRESS = '0xc90Cf316E1A74Ea9da13E87d95Eda3d9281731a1'.toLowerCase() as `0x${string}`;
 
-if (!/^0x[a-fA-F0-9]{40}$/.test(CONTRACT_ADDRESS)) {
-  throw new Error('CONTRACT_ADDRESS must be a valid Ethereum address (0x... format, 42 characters)');
-}
-
-// Actual contract ABI from deployed contract
+// Contract ABI (simplified to just what we need)
 const contractABI = [
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "to",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			}
-		],
-		"name": "approve",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"stateMutability": "nonpayable",
-		"type": "constructor"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "sender",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "address",
-				"name": "owner",
-				"type": "address"
-			}
-		],
-		"name": "ERC721IncorrectOwner",
-		"type": "error"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "operator",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			}
-		],
-		"name": "ERC721InsufficientApproval",
-		"type": "error"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "approver",
-				"type": "address"
-			}
-		],
-		"name": "ERC721InvalidApprover",
-		"type": "error"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "operator",
-				"type": "address"
-			}
-		],
-		"name": "ERC721InvalidOperator",
-		"type": "error"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "owner",
-				"type": "address"
-			}
-		],
-		"name": "ERC721InvalidOwner",
-		"type": "error"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "receiver",
-				"type": "address"
-			}
-		],
-		"name": "ERC721InvalidReceiver",
-		"type": "error"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "sender",
-				"type": "address"
-			}
-		],
-		"name": "ERC721InvalidSender",
-		"type": "error"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			}
-		],
-		"name": "ERC721NonexistentToken",
-		"type": "error"
-	},
-	{
-		"inputs": [],
-		"name": "mint",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "owner",
-				"type": "address"
-			}
-		],
-		"name": "OwnableInvalidOwner",
-		"type": "error"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "account",
-				"type": "address"
-			}
-		],
-		"name": "OwnableUnauthorizedAccount",
-		"type": "error"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "owner",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "approved",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			}
-		],
-		"name": "Approval",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "owner",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "operator",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "bool",
-				"name": "approved",
-				"type": "bool"
-			}
-		],
-		"name": "ApprovalForAll",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "attempter",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "bool",
-				"name": "success",
-				"type": "bool"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "message",
-				"type": "string"
-			}
-		],
-		"name": "MintAttempted",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "previousOwner",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "newOwner",
-				"type": "address"
-			}
-		],
-		"name": "OwnershipTransferred",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "to",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			}
-		],
-		"name": "POAPMinted",
-		"type": "event"
-	},
-	{
-		"inputs": [],
-		"name": "renounceOwnership",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "from",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "to",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			}
-		],
-		"name": "safeTransferFrom",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "from",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "to",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bytes",
-				"name": "data",
-				"type": "bytes"
-			}
-		],
-		"name": "safeTransferFrom",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "operator",
-				"type": "address"
-			},
-			{
-				"internalType": "bool",
-				"name": "approved",
-				"type": "bool"
-			}
-		],
-		"name": "setApprovalForAll",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "from",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "to",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			}
-		],
-		"name": "Transfer",
-		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "from",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "to",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			}
-		],
-		"name": "transferFrom",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "newOwner",
-				"type": "address"
-			}
-		],
-		"name": "transferOwnership",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "owner",
-				"type": "address"
-			}
-		],
-		"name": "balanceOf",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			}
-		],
-		"name": "getApproved",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "getWorkshopDetails",
-		"outputs": [
-			{
-				"components": [
-					{
-						"internalType": "string",
-						"name": "name",
-						"type": "string"
-					},
-					{
-						"internalType": "uint256",
-						"name": "startDate",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "endDate",
-						"type": "uint256"
-					}
-				],
-				"internalType": "struct WorkshopPOAP.WorkshopMetadata",
-				"name": "",
-				"type": "tuple"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"name": "hasMinted",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "owner",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "operator",
-				"type": "address"
-			}
-		],
-		"name": "isApprovedForAll",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "name",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "owner",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			}
-		],
-		"name": "ownerOf",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes4",
-				"name": "interfaceId",
-				"type": "bytes4"
-			}
-		],
-		"name": "supportsInterface",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "symbol",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "tokenId",
-				"type": "uint256"
-			}
-		],
-		"name": "tokenURI",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "workshopDetails",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "name",
-				"type": "string"
-			},
-			{
-				"internalType": "uint256",
-				"name": "startDate",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "endDate",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	}
+  {
+    "inputs": [],
+    "name": "mint",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "hasMinted",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
 ] as const;
 
-// Base mainnet deployment block - updated for new contract
-const DEPLOYMENT_BLOCK = BigInt('7300000'); // Starting from a recent block to ensure we catch all events
+// Basescan API endpoint
+const BASESCAN_API = 'https://api.basescan.org/api';
+const BASESCAN_API_KEY = process.env.NEXT_PUBLIC_BASESCAN_API_KEY || '';
+
+// Types for Basescan API response
+interface BasescanTransaction {
+  blockNumber: string;
+  timeStamp: string;
+  hash: string;
+  from: string;
+  to: string;
+  value: string;
+  isError: string;
+  txreceipt_status: string;
+  input: string;
+  // Add other fields as needed
+}
+
+interface BasescanResponse {
+  status: string;
+  message: string;
+  result: BasescanTransaction[];
+}
 
 export default function Home() {
-  const { isFrameReady } = useMiniKit();
   const { address } = useAccount();
   const [hasMinted, setHasMinted] = useState<boolean>(false);
   const [justMinted, setJustMinted] = useState<boolean>(false);
@@ -668,123 +71,56 @@ export default function Home() {
   
   // Metrics state
   const [totalMints, setTotalMints] = useState<number>(0);
-  const [successRate, setSuccessRate] = useState<number>(0);
   const [recentMints, setRecentMints] = useState<Array<{
     address: string;
     timestamp: number;
   }>>([]);
 
-  // Get public client for fetching events
-  const publicClient = usePublicClient();
-
-  // Fetch historical events on component mount
+  // Fetch contract transactions
   useEffect(() => {
-    const fetchHistoricalEvents = async () => {
-      if (!publicClient) return;
-
+    const fetchTransactions = async () => {
       try {
-        // Get past POAPMinted events
-        const mintEvents = await publicClient.getContractEvents({
-          address: CONTRACT_ADDRESS,
-          abi: contractABI,
-          eventName: 'POAPMinted',
-          fromBlock: DEPLOYMENT_BLOCK,
-          toBlock: 'latest'
-        });
-
-        // Get past MintAttempted events
-        const attemptEvents = await publicClient.getContractEvents({
-          address: CONTRACT_ADDRESS,
-          abi: contractABI,
-          eventName: 'MintAttempted',
-          fromBlock: DEPLOYMENT_BLOCK,
-          toBlock: 'latest'
-        });
-
-        // Update metrics
-        setTotalMints(mintEvents.length);
+        // Fetch normal transactions to the contract
+        const response = await fetch(
+          `${BASESCAN_API}?module=account&action=txlist&address=${CONTRACT_ADDRESS}&startblock=0&endblock=99999999&sort=desc&apikey=${BASESCAN_API_KEY}`
+        );
         
-        const attempts = attemptEvents.length;
-        const successes = attemptEvents.filter(event => {
-          const args = event.args as { success: boolean };
-          return args.success;
-        }).length;
-        setSuccessRate(attempts > 0 ? (successes / attempts) * 100 : 0);
-
-        // Update recent mints
-        const recentMintEvents = mintEvents
-          .slice(-5)
-          .map(event => {
-            const args = event.args as { to: string };
-            const address = args.to;
-            const timestamp = Date.now();
-            return { address, timestamp };
-          })
-          .reverse();
+        const data = await response.json() as BasescanResponse;
         
-        setRecentMints(recentMintEvents);
+        if (data.status === '1' && data.result) {
+          // Filter successful mint transactions (method ID for mint function)
+          const mintTxs = data.result.filter((tx: BasescanTransaction) => 
+            tx.isError === '0' && // successful transactions
+            tx.input.startsWith('0x1249c58b') && // mint function signature
+            tx.txreceipt_status === '1' // confirmed transactions
+          );
+
+          // Update total mints
+          setTotalMints(mintTxs.length);
+
+          // Update recent mints
+          const recent = mintTxs
+            .slice(0, 5)
+            .map((tx: BasescanTransaction) => ({
+              address: tx.from,
+              timestamp: parseInt(tx.timeStamp) * 1000 // Convert to milliseconds
+            }));
+          
+          setRecentMints(recent);
+        }
       } catch (error) {
-        console.error('Error fetching historical events:', error);
+        console.error('Error fetching transactions:', error);
       }
     };
 
-    fetchHistoricalEvents();
-  }, [publicClient]);
+    // Fetch initial data
+    fetchTransactions();
 
-  // Watch for new POAPMinted events
-  useWatchContractEvent({
-    address: CONTRACT_ADDRESS,
-    abi: contractABI,
-    eventName: 'POAPMinted',
-    onLogs: (logs) => {
-      setTotalMints(prev => prev + logs.length);
-      const newMints = logs.map(log => {
-        const args = log.args as { to: string };
-        return {
-          address: args.to,
-          timestamp: Date.now()
-        };
-      });
-      setRecentMints(prev => [...newMints, ...prev].slice(0, 5));
-    }
-  });
+    // Set up polling for updates every 30 seconds
+    const interval = setInterval(fetchTransactions, 30000);
 
-  // Watch for new MintAttempted events
-  useWatchContractEvent({
-    address: CONTRACT_ADDRESS,
-    abi: contractABI,
-    eventName: 'MintAttempted',
-    onLogs: (logs) => {
-      const successes = logs.filter(log => {
-        const args = log.args as { success: boolean };
-        return args.success;
-      }).length;
-      setSuccessRate(() => {
-        const newTotal = totalMints + logs.length;
-        const newSuccesses = successes;
-        return newTotal > 0 ? (newSuccesses / newTotal) * 100 : 0;
-      });
-    }
-  });
-
-  // Initialize Farcaster SDK
-  useEffect(() => {
-    try {
-      sdk.actions.ready();
-      console.log('Farcaster SDK initialized');
-    } catch (error) {
-      console.error('Failed to initialize Farcaster SDK:', error);
-    }
+    return () => clearInterval(interval);
   }, []);
-
-  // Check mint status
-  const { data: mintStatus } = useReadContract({
-    address: CONTRACT_ADDRESS,
-    abi: contractABI,
-    functionName: 'hasMinted',
-    args: address ? [address] : undefined,
-    account: address,
-  });
 
   // Check if user has already minted
   const { data: hasMintedData } = useReadContract({
@@ -828,7 +164,6 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#0052FF] text-white">
-      {/* Fixed Header */}
       <header className="fixed top-0 left-0 right-0 bg-[#0052FF]/80 backdrop-blur-sm border-b border-white/10 z-50">
         <div className="max-w-2xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -845,17 +180,14 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Content */}
       <div className="max-w-2xl mx-auto px-4 pt-24 pb-12">
-        {/* Hero Section */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4">Base Challenge POAP</h1>
           <p className="text-xl text-white/60">
-            Mint your POAP to commemorate participating in the Base Challenge!
+            Mint your POAP to commemorate participating in the Build on Base Challenge by Borderless Workshops!
           </p>
         </div>
 
-        {/* Replace img with Image component */}
         <div className="relative w-full aspect-video rounded-xl overflow-hidden mb-8">
           <Image
             src="/hero.png"
@@ -867,14 +199,10 @@ export default function Home() {
         </div>
 
         {/* Metrics Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 text-center">
             <div className="text-3xl font-bold">{totalMints}</div>
             <div className="text-sm text-white/60">Total POAPs Minted</div>
-          </div>
-          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 text-center">
-            <div className="text-3xl font-bold">{successRate.toFixed(1)}%</div>
-            <div className="text-sm text-white/60">Success Rate</div>
           </div>
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4">
             <div className="text-sm font-medium mb-2">Recent Mints</div>
@@ -892,77 +220,34 @@ export default function Home() {
           </div>
         </div>
 
-        {address && (
-          <div className="space-y-6">
-            {/* Workshop Details Card */}
-            <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-6 sm:p-8">
-              <h2 className="text-2xl font-bold mb-6">Workshop Details</h2>
-              <div className="grid sm:grid-cols-2 gap-8">
-                <div className="space-y-4">
-                  <div>
-                    <span className="text-sm text-white/60">Event</span>
-                    <p className="font-medium">Build on Base Challenge</p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-white/60">Start Date</span>
-                    <p className="font-medium">June 16, 2025</p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-white/60">End Date</span>
-                    <p className="font-medium">June 25, 2025</p>
-                  </div>
-                </div>
-                <div className="hidden sm:flex items-center justify-center">
-                  <img
-                    src="/icon.png"
-                    alt="Workshop Logo"
-                    className="w-32 h-32 object-contain opacity-90 hover:opacity-100 transition-opacity"
-                  />
-                </div>
-              </div>
+        {/* Mint Section */}
+        <div className="text-center">
+          {!address ? (
+            <p className="text-white/60 mb-4">Connect your wallet to mint</p>
+          ) : hasMinted ? (
+            <div className="bg-white/10 rounded-xl p-6 mb-4">
+              <h3 className="text-xl font-bold mb-2">🎉 You&apos;ve already minted!</h3>
+              <p className="text-white/60">Thank you for participating in the Base Challenge</p>
             </div>
-
-            {/* Mint Section */}
-            <div className="text-center">
-              {!address ? (
-                <p className="text-white/60 mb-4">Connect your wallet to mint</p>
-              ) : hasMinted ? (
-                <div className="bg-white/10 rounded-xl p-6 mb-4">
-                  <h3 className="text-xl font-bold mb-2">🎉 You've already minted!</h3>
-                  <p className="text-white/60">Thank you for participating in the Base Challenge</p>
-                </div>
-              ) : justMinted ? (
-                <div className="bg-white/10 rounded-xl p-6 mb-4">
-                  <h3 className="text-xl font-bold mb-2">🎉 Mint successful!</h3>
-                  <p className="text-white/60">Your POAP has been minted to your wallet</p>
-                </div>
-              ) : (
-                <button
-                  onClick={handleMint}
-                  disabled={isMinting || !address}
-                  className={`w-full max-w-sm mx-auto px-8 py-4 rounded-xl font-medium transition
-                    ${isMinting 
-                      ? 'bg-white/20 cursor-not-allowed'
-                      : 'bg-white hover:bg-white/90 text-[#0052FF] hover:scale-105'
-                    }`}
-                >
-                  {isMinting ? 'Minting...' : 'Mint POAP'}
-                </button>
-              )}
+          ) : justMinted ? (
+            <div className="bg-white/10 rounded-xl p-6 mb-4">
+              <h3 className="text-xl font-bold mb-2">🎉 Mint successful!</h3>
+              <p className="text-white/60">Your POAP has been minted to your wallet</p>
             </div>
-          </div>
-        )}
-
-        {/* Initial Connect State */}
-        {!address && (
-          <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-8 text-center">
-            <h2 className="text-2xl font-bold mb-4">Connect Your Wallet</h2>
-            <p className="text-white/60 mb-6">
-              Connect your wallet to mint your exclusive POAP from the BUILD ON BASE workshop
-            </p>
-            <WalletConnect />
-          </div>
-        )}
+          ) : (
+            <button
+              onClick={handleMint}
+              disabled={isMinting || !address}
+              className={`w-full max-w-sm mx-auto px-8 py-4 rounded-xl font-medium transition
+                ${isMinting 
+                  ? 'bg-white/20 cursor-not-allowed'
+                  : 'bg-white hover:bg-white/90 text-[#0052FF] hover:scale-105'
+                }`}
+            >
+              {isMinting ? 'Minting...' : 'Mint POAP'}
+            </button>
+          )}
+        </div>
       </div>
     </main>
   );

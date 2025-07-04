@@ -138,10 +138,43 @@
   resolved "https://registry.npmjs.org/@farcaster/frame-wagmi-connector/-/frame-wagmi-connector-0.0.53.tgz"
   integrity sha512-+fonXzzj3KxTeUHbtt7lZUC4v/MhC2Y2KpQw7WcVamiDwedm+jTMqBIdrMrWRej/HSWrBQ1rDIOlsWxnv9CDng==
 
+"@farcaster/miniapp-core@0.3.2":
+  version "0.3.2"
+  resolved "https://registry.npmjs.org/@farcaster/miniapp-core/-/miniapp-core-0.3.2.tgz"
+  integrity sha512-gxkQXfp3WeAd03tG5kbtihqkflBofgXy61lzQ55DgI94ROemG6AV8qwyl3uHp4Z6SPSX5QWwbjkOJJI2J0MaYA==
+  dependencies:
+    "@solana/web3.js" "^1.98.2"
+    ox "^0.4.4"
+    zod "^3.25.0"
+
+"@farcaster/miniapp-sdk@^0.1.0":
+  version "0.1.2"
+  resolved "https://registry.npmjs.org/@farcaster/miniapp-sdk/-/miniapp-sdk-0.1.2.tgz"
+  integrity sha512-sBAUqVdzhTUaz7aNNvQh1Jc35j5NOVPlpN19eSC+yh/Ja0hu4xPdoOuV/IgLX5R3prSRSaMqB3qVfhy5TKz87g==
+  dependencies:
+    "@farcaster/miniapp-core" "0.3.2"
+    "@farcaster/quick-auth" "^0.0.6"
+    comlink "^4.4.2"
+    eventemitter3 "^5.0.1"
+    ox "^0.4.4"
+
+"@farcaster/miniapp-wagmi-connector@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.npmjs.org/@farcaster/miniapp-wagmi-connector/-/miniapp-wagmi-connector-1.0.0.tgz"
+  integrity sha512-vMRZbekUUctnAUvBFhNoEsJlujRRdxop94fDy5LrKiRR9ax0wtp8gCvLYO+LpaP2PtGs0HFpRwlHNDJWvBR8bg==
+
 "@farcaster/quick-auth@^0.0.5":
   version "0.0.5"
   resolved "https://registry.npmjs.org/@farcaster/quick-auth/-/quick-auth-0.0.5.tgz"
   integrity sha512-Z8hWz/7c33zlmII2AJHja/Wz0C03mm2o+CEBtBylmiun1wC4FMgx1Fal699VQvBUG1lpcJ662WxuRNxKogktDw==
+  dependencies:
+    jose "^5.2.3"
+    zod "^3.25.1"
+
+"@farcaster/quick-auth@^0.0.6":
+  version "0.0.6"
+  resolved "https://registry.npmjs.org/@farcaster/quick-auth/-/quick-auth-0.0.6.tgz"
+  integrity sha512-tiZndhpfDtEhaKlkmS5cVDuS+A/tafqZT3y9I44rC69m3beJok6e8dIH2JhxVy3EvOWTyTBnrmNn6GOOh+qK6A==
   dependencies:
     jose "^5.2.3"
     zod "^3.25.1"
@@ -5352,7 +5385,7 @@ yocto-queue@^0.1.0:
   resolved "https://registry.npmjs.org/yocto-queue/-/yocto-queue-0.1.0.tgz"
   integrity sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==
 
-"zod@^3 >=3.22.0", zod@^3.24.1, zod@^3.25.1:
+"zod@^3 >=3.22.0", zod@^3.24.1, zod@^3.25.0, zod@^3.25.1:
   version "3.25.67"
   resolved "https://registry.npmjs.org/zod/-/zod-3.25.67.tgz"
   integrity sha512-idA2YXwpCdqUSKRCACDE6ItZD9TZzy3OZMtpfLoh6oPR47lipysRrJfjzMqFxQ3uJuUPyUeWe1r9vLH33xO/Qw==

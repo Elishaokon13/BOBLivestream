@@ -2,7 +2,7 @@
 
 A **Proof of Attendance Protocol (POAP)** application built for the "BUILD ON BASE CHALLENGE - BORDERLESS WORKSHOPS" event. This application allows workshop attendees to mint unique, non-transferable tokens (Soulbound Tokens) as proof of their participation.
 
-![POAP App Screenshot](/demo/public/app.png)
+![POAP App Screenshot](/demo/public/screenshot.png)
 
 ## 🎯 Project Overview
 
@@ -12,7 +12,7 @@ This is a decentralized application that enables workshop attendees to claim a u
 
 - **🎫 One-Click POAP Minting** - Simple interface for claiming workshop attendance tokens
 - **🔒 Soulbound Token Implementation** - Non-transferable NFTs ensuring authenticity
-- **📱 Farcaster Frame Compatible** - Designed to work seamlessly in Farcaster frames
+- **📱 Farcaster Frame Integration** - Full Farcaster frame support with splash screen and loading states
 - **🎉 Interactive UI** - Confetti animations and real-time feedback
 - **⚡ Base Network Integration** - Deployed on Base Mainnet for low fees
 - **🧪 Test Mode** - Development-friendly testing capabilities
@@ -21,9 +21,9 @@ This is a decentralized application that enables workshop attendees to claim a u
 
 - **Frontend**: Next.js 15 with TypeScript
 - **Blockchain**: Base Mainnet
-- **Web3 Integration**: Base Minikit + OnchainKit
+- **Web3 Integration**: Farcaster MiniApp SDK + Wagmi Connector
 - **Wallet Connection**: Wagmi v2 + Viem
-- **Styling**: Tailwind CSS
+- **Styling**: Tailwind CSS + Magic UI Components
 - **Animations**: Canvas Confetti
 - **Smart Contract**: ERC721-based Soulbound Token
 
@@ -35,6 +35,13 @@ This is a decentralized application that enables workshop attendees to claim a u
 - ✅ **Workshop Data Loading** - Displays real workshop details from contract
 - ✅ **Transaction Handling** - Full transaction lifecycle with status updates
 - ✅ **Error Handling** - Proper handling for edge cases and failed transactions
+
+### Farcaster Frame Integration
+- ✅ **Splash Screen** - Custom loading screen while app initializes
+- ✅ **MiniApp SDK** - Full integration with @farcaster/miniapp-sdk
+- ✅ **Wallet Connection** - Seamless wallet connection via Farcaster
+- ✅ **Loading States** - Proper loading indicators and state management
+- ✅ **Error Recovery** - Graceful error handling in frame context
 
 ### User Experience
 - ✅ **Responsive Design** - Mobile-friendly interface
@@ -66,8 +73,8 @@ This is a decentralized application that enables workshop attendees to claim a u
 2. **Environment Setup**
    ```bash
    # .env file is already configured with:
-   NEXT_PUBLIC_CONTRACT_ADDRESS=0xd3F581adEF8b654b7ed08F3aD43fEd0fC359b117
-   NEXT_PUBLIC_ONCHAINKIT_API_KEY=KMTx3-re3hSXd1WEqKyJjTVcD96xUZmP
+   NEXT_PUBLIC_CONTRACT_ADDRESS=0xc90Cf316E1A74Ea9da13E87D95Eda3d9281731a1
+   NEXT_PUBLIC_ONCHAINKIT_API_KEY=your-api-key
    ```
 
 3. **Start Development Server**
@@ -83,7 +90,7 @@ This is a decentralized application that enables workshop attendees to claim a u
 ## 📄 Smart Contract Details
 
 ### Contract Information
-- **Address**: `0xd3F581adEF8b654b7ed08F3aD43fEd0fC359b117`
+- **Address**: `0xc90Cf316E1A74Ea9da13E87d95Eda3d9281731a1`
 - **Network**: Base Mainnet
 - **Type**: ERC721-based Soulbound Token
 - **Standard**: OpenZeppelin v5
@@ -104,27 +111,30 @@ function balanceOf(address) external view returns (uint256)
 function name() external view returns (string)
 ```
 
-### Workshop Metadata
-- **Name**: "BUILD ON BASE CHALLENGE - BORDERLESS WORKSHOPS"
-- **Start Date**: June 16, 2025
-- **End Date**: June 25, 2025
-- **Token Standard**: ERC721 (Soulbound)
 
 ## 🏗 Project Structure
 
 ```
 demo/
 ├── app/
+│   ├── api/
+│   │   ├── notify/           # Notification endpoints
+│   │   └── webhook/          # Webhook handlers
 │   ├── components/
-│   │   └── DemoComponents.tsx    # Base UI components
-│   ├── page.tsx                  # Main POAP application
-│   ├── layout.tsx               # App layout
-│   ├── providers.tsx            # Web3 providers
-│   └── globals.css              # Global styles
-├── lib/                         # Utility libraries
-├── public/                      # Static assets
-├── .env                         # Environment variables
-└── package.json                 # Dependencies
+│   │   ├── DemoComponents.tsx # Base UI components
+│   │   └── WalletConnect.tsx  # Wallet connection component
+│   ├── page.tsx              # Main POAP application
+│   ├── layout.tsx            # App layout
+│   ├── providers.tsx         # Web3 providers
+│   └── globals.css           # Global styles
+├── lib/
+│   ├── notification-client.ts # Notification handling
+│   ├── notification.ts       # Notification types
+│   ├── redis.ts             # Redis client
+│   └── wagmi.ts             # Wagmi configuration
+├── public/                   # Static assets
+├── .env                      # Environment variables
+└── package.json             # Dependencies
 ```
 
 ## 🎮 How to Use
@@ -165,7 +175,8 @@ npm run lint
 The application is designed for deployment as a Farcaster frame but can also be accessed as a standalone web application.
 
 ### Frame Integration
-- Compatible with Farcaster frame standards
+- Full Farcaster MiniApp SDK integration
+- Custom splash screen and loading states
 - Automatic wallet connection in frame context
 - Optimized for mobile frame viewing
 
@@ -174,7 +185,6 @@ The application is designed for deployment as a Farcaster frame but can also be 
 - Environment variables must be configured
 - Requires wallet connection for full functionality
 
-
 ## 📊 Analytics & Events
 
 The contract emits several events for tracking:
@@ -182,18 +192,17 @@ The contract emits several events for tracking:
 - `MintAttempted(address attempter, bool success, string message)` - All mint attempts
 - `Transfer(address from, address to, uint256 tokenId)` - Token transfers (blocked for SBT)
 
-
 ## 📝 License
 
 This project is built for educational and workshop purposes as part of the BUILD ON BASE CHALLENGE.
 
 ## 🙏 Acknowledgments
 
-- **Base Team** - For the amazing Base Minikit and OnchainKit
+- **Base Team** - For the amazing Base ecosystem and tools
 - **Workshop Organizers** - For the BUILD ON BASE CHALLENGE event
-- **Farcaster** - For the frame integration capabilities
+- **Farcaster** - For the MiniApp SDK and frame capabilities
 - **OpenZeppelin** - For secure smart contract standards
 
 ---
 
-**Built with ❤️ on Base** | **Powered by Base Minikit**
+**Built with ❤️ with Minikit**

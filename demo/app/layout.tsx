@@ -23,23 +23,10 @@ export async function generateMetadata(): Promise<Metadata> {
       images: [heroImage],
     },
     other: {
-      "fc:frame": JSON.stringify({
-        version: "vNext",
-        image: {
-          src: heroImage,
-          aspectRatio: "1.91:1",
-        },
-        buttons: [
-          {
-            label: `Launch ${projectName}`,
-            action: "post",
-          },
-        ],
-        postUrl: URL,
-      }),
-      "fc:frame:image": heroImage,
-      "fc:frame:post_url": URL,
-      "fc:frame:button:1": `Launch ${projectName}`,
+      'fc:frame': 'next',
+      'fc:frame:image': heroImage,
+      'fc:frame:button:1': '🎉 Mint POAP',
+      'fc:frame:post_url': URL,
     },
   };
 }

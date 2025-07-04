@@ -5,6 +5,7 @@ import { useMiniKit } from '@coinbase/onchainkit/minikit';
 import { useAccount, useReadContract, useWriteContract } from 'wagmi';
 import confetti from 'canvas-confetti';
 import { WalletConnect } from './components/WalletConnect';
+import { sdk } from '@farcaster/miniapp-sdk';
 
 // Type guard for Ethereum address
 function isValidEthereumAddress(address: string): address is `0x${string}` {
@@ -665,6 +666,16 @@ export default function Home() {
   const [hasMinted, setHasMinted] = useState<boolean>(false);
   const [justMinted, setJustMinted] = useState<boolean>(false);
   
+  // Initialize SDK
+  useEffect(() => {
+    try {
+      sdk.actions.ready();
+      console.log('Farcaster SDK initialized');
+    } catch (error) {
+      console.error('Failed to initialize Farcaster SDK:', error);
+    }
+  }, []);
+
   // Debug logging
   console.log('Debug - address:', address, 'isFrameReady:', isFrameReady);
 
